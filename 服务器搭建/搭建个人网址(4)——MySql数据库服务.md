@@ -17,9 +17,13 @@ wget http://repo.mysql.com/mysql57-community-release-el7-10.noarch.rpm
 rpm -Uvh mysql57-community-release-el7-10.noarch.rpm
 ```
 
-3. 安装MySQL服务端,需要等待一些时间
+3. 安装MySQL服务端，需要等待一些时间
 ```
 yum install -y mysql-community-server
+```
+```
+注：如果提示仓库 "MySQL 5.7 Community Server" 的 GPG 公钥已安装，但是不适用于此软件包，
+则执行`rpm --import https://repo.mysql.com/RPM-GPG-KEY-mysql-2022` ，然后重新安装
 ```
 
 4. 启动MySQL
@@ -36,6 +40,11 @@ systemctl status mysqld.service
 先进入mysql命令行界面
 ```
 默认情况下，用`mysql`命令即可
+
+如果报错：ERROR 1045 (28000): Access denied for user 'root'@'localhost'，
+则修改 /etc/my.cnf文件，在最后加入skip-grant-tables
+
+然后重启数据库：systemctl restart mysqld
 ```
 
 然后是创建数据库
@@ -58,7 +67,7 @@ prompt TEXT,
 completion TEXT,
 invoke_time DATETIME default current_timestamp,
 primary key(id)
-)
+);
 ```
 运行效果如下图
 
@@ -71,9 +80,9 @@ primary key(id)
 补充些常用命令
 ```
 插入数据
-    INSERT INTO invoke_record(ip, prompt, completion) VALUES("ip1","prompt2","completion3")
+    INSERT INTO invoke_record(ip, prompt, completion) VALUES("ip1","prompt2","completion3");
 查询数据
-    select * from invoke_record
+    select * from invoke_record;
 ```
 
 ## 远程访问数据库
@@ -84,7 +93,7 @@ primary key(id)
 新建连接，填写连接的参数，包括连接名、IP、端口（默认3306）、用户名、密码。
 填完后点击下面的测试连接是否成功。
 
-正常应该是测试失败，原因可能是默认账号不支持远程登陆，所以往下看，创建新的数据库用户。
+如果测试失败，原因可能是默认账号不支持远程登陆，所以往下看，创建新的数据库用户。
 
 ### 创建数据库用户
 创建新用户，用于远程登陆，命令如下。
@@ -103,6 +112,24 @@ mysql -u song -p
 按回车后根据提示，输入密码`pwd123`
 
 能成功进入mysql命令行，说明新用户创建成功，回到前面的可视化软件，再次尝试应该就可以了。
+
+```
+如果数据库保存中文失败，
+则修改 /etc/my.cnf文件，在最后加入
+
+[client]
+default-character-set = utf8mb4
+
+[mysql]
+default-character-set = utf8mb4
+
+[mysqld]
+character-set-client-handshake = FALSE
+character-set-server = utf8mb4
+collation-server = utf8mb4_bin  #utf8mb4_unicode_ci 会导致部分字符查询出错
+
+然后重启数据库：systemctl restart mysqld
+```
 
 ## 项目实践
 1. 更新上篇文章的ChatGpt项目的代码，具体做法：进入项目所在的目录，运行`git pull`命令。
